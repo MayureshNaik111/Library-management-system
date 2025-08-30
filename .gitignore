@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Build folders (if any)
+dist/
+build/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Temporary files
+tmp/
+temp/
+
+# Database files (if you store local DB files)
+*.sqlite
+*.db
+
+# Coverage reports (if using testing tools)
+coverage/
+
+# Optional: package lock (sometimes included, sometimes not)
+package-lock.json
+yarn.lock
