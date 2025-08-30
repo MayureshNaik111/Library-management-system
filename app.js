@@ -4,6 +4,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const path = require('path');
 const favicon = require("serve-favicon");
 
+// Initialize app
 const app = express();
 
 app.use(favicon(path.join(__dirname, 'public', 'open-book.png')));
