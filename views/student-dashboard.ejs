@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
+
+    <!-- ✅ Poppins font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+
+<body>
+
+    <div class="main-container">
+        <!-- Static image container -->
+        <div class="slideshow-container">
+            <br><br><br><br>
+            <div class="welcome-text">
+                <div class="dashboard-title">Student Dashboard</div>
+                <div class="welcome-name">Welcome, <%= user.name %>!</div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="buttons">
+                <button class="button search" id="Search books">SEARCH BOOKS</button>
+                <button class="button issue" id="Borrowed books">BORROW BOOKS</button>
+                <button class="button return" id="Return books">RETURN BOOKS</button>
+                <button class="button pay" id="Pay fines">PAY FINES</button>
+            </div>
+        </div>
+
+        <!-- Sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="profile-container">
+                    <img src="<%=user.profilePic || '/assets/images/similing_profile_pic.jpg' %>" alt="Profile Picture"
+                        class="profile-img" id="profilePic">
+
+                    <button class="edit-btn" id="editBtn">
+                        <img src="/assets/images/edit.png" alt="Edit" class="edit-icon">
+                    </button>
+
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                </div>
+                <br>
+                <div class="user-id">
+                    <%= user.name %>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" id="viewProfile"><i class="fa-solid fa-user"></i><span>View Profile</span></a>
+                <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+            </nav>
+        </div>
+
+        <div class="toggle-button" id="toggleBtn" aria-label="Toggle Sidebar"></div>
+
+        <!-- Modal -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>User Details</h2>
+                    <span class="close" aria-label="Close Modal">&times;</span>
+                </div>
+                <form>
+                    <div class="form-group"><label>User Type:</label><input type="text" value="Student" disabled></div>
+                    <div class="form-group"><label>User ID:</label><input type="text" value="<%= user.name %>" disabled>
+                    </div>
+                    <div class="form-group"><label>Email:</label><input type="text" value="<%= user.email %>" disabled>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('toggleBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const editBtn = document.getElementById('editBtn');
+        const fileInput = document.getElementById('fileInput');
+        const profilePic = document.getElementById('profilePic');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            toggleBtn.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        }
+
+        toggleBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && sidebar.classList.contains('open')) toggleSidebar();
+        });
+
+        const modal = document.getElementById('userModal');
+        const btn = document.getElementById('viewProfile');
+        const span = document.getElementsByClassName('close')[0];
+
+        btn.onclick = () => modal.style.display = 'block';
+        span.onclick = () => modal.style.display = 'none';
+        window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.style.display === 'block') modal.style.display = 'none';
+        });
+
+        // Navigation buttons
+        document.getElementById('Search books').onclick = () => window.location.href = '/student/search-books';
+        document.getElementById('View borrowed books').onclick = () => window.location.href = '/student/borrowed-books';
+        document.getElementById('Return books').onclick = () => window.location.href = '/student/return-books';
+        document.getElementById('Pay fines').onclick = () => window.location.href = '/student/pay-fines';
+
+        // Profile picture update
+        editBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64Image = e.target.result;
+
+                profilePic.src = base64Image;
+
+                const res = await fetch('/update-profile-pic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+
+                if (!res.ok) alert('Failed to update profile picture');
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+    </script>
+
+</body>
+
+</html>
