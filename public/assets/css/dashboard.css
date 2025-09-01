@@ -118,13 +118,11 @@ body {
 /* Button Types */
 .search {
   /* border-left: 6px solid #ff4d4d; */
-  background: #fd5c5c;
   background: #fbca1f;
 }
 
 .issue {
   /* border-left: 6px solid #4a9bb8; */
-  background: #5cbdfd;
   background: #fbca1f;
 }
 
@@ -135,7 +133,6 @@ body {
 
 .pay {
   /* border-left: 6px solid #8bc34a; */
-  background: #94fb1f;
   background: #fbca1f;
 }
 
@@ -222,7 +219,7 @@ body {
   font-size: 16px;
   font-weight: bold;
   word-wrap: break-word;
-  color: #ccc;
+  color: #ffffff;
   position: relative;
   /* needed for :after */
   cursor: pointer;
