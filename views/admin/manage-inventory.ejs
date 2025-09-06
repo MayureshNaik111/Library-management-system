@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Inventory</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/fontawesome-free-6.7.2-web/css/all.min.css" />
+  <link rel="stylesheet" href="/assets/css/tableLayoutWithSearch.css" />
+  <script>
+    // Using AJAX for real time search
+    function searchBooks() {
+      const query = document.getElementById('search').value;
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'search_ManageInventory?query=' + query, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          document.getElementById('searchResults').innerHTML = xhr.responseText;
+        }
+      };
+      xhr.send();
+    }
+  </script>
+</head>
+
+<body>
+
+  <div class="background-container"></div>
+
+  <main class="content-wrapper">
+    <h1>Manage Inventory</h1>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <input type="text" id="search" name="search" placeholder="Search for books..." required onkeyup="searchBooks()" />
+      <input type="button" id="search-button" value="Search" onclick="searchBooks()" />
+    </div>
+
+    <!-- Table Display -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Sl.No.</th>
+            <th>ISBN No.</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Available</th>
+            <th>Borrowed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="searchResults">
+          <% if (books && books.length> 0) { %>
+            <% books.forEach((book, index)=> { %>
+              <tr>
+                <td data-label="Sl.No.">
+                  <%= index + 1 %>
+                </td>
+                <td data-label="ISBN No.">
+                  <%= book.isbn %>
+                </td>
+                <td data-label="Title">
+                  <%= book.title %>
+                </td>
+                <td data-label="Author">
+                  <%= book.author %>
+                </td>
+                <td data-label="Available">
+                  <%= book.available %>
+                </td>
+                <td data-label="Borrowed">
+                  <%= book.borrowed %>
+                </td>
+                <td data-label="Actions">
+                  <div class="action-buttons">
+                    <form action="AddBooks" method="GET">
+                      <input type="hidden" name="isbn" value="<%= book.isbn %>">
+                      <input type="hidden" name="title" value="<%= book.title %>">
+                      <input type="hidden" name="author" value="<%= book.author %>">
+                      <button type="submit" name="add" class="green-btn">
+                        <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
+                      </button>
+                    </form>
+                    <form action="RemoveBooks" method="GET">
+                      <input type="hidden" name="isbn" value="<%= book.isbn %>">
+                      <input type="hidden" name="title" value="<%= book.title %>">
+                      <input type="hidden" name="author" value="<%= book.author %>">
+                      <button type="submit" name="remove" class="red-btn" <%=book.available !=0 ? "" : "disabled" %>>
+                        <i class="fa-solid fa-minus"></i>&nbsp;&nbsp;Remove
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7">
+                      <center>The library is empty...</center>
+                    </td>
+                  </tr>
+                  <% } %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</body>
+
+</html>

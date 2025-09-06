@@ -1,0 +1,357 @@
+/* General Reset and Base Styles */
+*,
+*::before,
+*::after {
+     box-sizing: border-box;
+     margin: 0;
+     padding: 0;
+}
+
+body {
+     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+     line-height: 1.6;
+     color: #333;
+     min-height: 100vh;
+}
+
+.background-container {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     z-index: -1;
+     background-color: #050a1a;
+     background-image:
+          radial-gradient(circle at 15% 85%, #00d4ff 0%, transparent 40%),
+          radial-gradient(circle at 80% 20%, #0050e0 0%, transparent 35%);
+     background-size: 300% 300%;
+     background-repeat: no-repeat;
+     animation: swirl-animation 20s ease-in-out infinite;
+}
+
+@keyframes swirl-animation {
+     0% {
+          background-position: 0% 0%;
+     }
+
+     25% {
+          background-position: 25% 100%;
+     }
+
+     50% {
+          background-position: 100% 100%;
+     }
+
+     75% {
+          background-position: 80% 0%;
+     }
+
+     100% {
+          background-position: 0% 0%;
+     }
+}
+
+/* Main content wrapper for centering and spacing */
+.content-wrapper {
+     width: 95%;
+     max-width: 1400px;
+     margin: 0 auto;
+     padding: 20px 10px;
+}
+
+h1 {
+     color: white;
+     text-align: center;
+     margin-bottom: 20px;
+     font-size: 2.5em;
+}
+
+form {
+     display: inline-block;
+}
+
+/* Search Container */
+.search-container {
+     display: flex;
+     align-items: center;
+     border: 2px solid #7B66FF;
+     border-radius: 50px;
+     overflow: hidden;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+     background-color: #fff;
+     margin-bottom: 30px;
+     width: 100%;
+     max-width: 700px;
+     margin-left: auto;
+     margin-right: auto;
+}
+
+#search {
+     flex: 1;
+     padding: 12px 20px;
+     border: none;
+     outline: none;
+     font-size: 16px;
+     color: #333;
+     min-width: 100px;
+}
+
+#search-button {
+     padding: 12px 25px;
+     border: none;
+     background-image: linear-gradient(to right, #007BFF 0%, #00C6FF 51%, #007BFF 100%);
+     color: #fff;
+     font-size: 16px;
+     font-weight: bold;
+     cursor: pointer;
+     box-shadow: 0 4px 15px 0 rgba(0, 123, 255, 0.4);
+     transition: all 0.4s ease;
+}
+
+#search-button:hover {
+     box-shadow: 0 8px 20px 0 rgba(0, 123, 255, 0.55);
+     transform: scale(1.05);
+}
+
+#search-button:active {
+     transform: scale(1.15);
+}
+
+/* Table Container */
+.table-container {
+     width: 100%;
+     overflow-x: auto;
+     /* Fallback for very wide tables on desktop */
+     background-color: #fff;
+     padding: 20px;
+     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+     border-radius: 10px;
+}
+
+table {
+     width: 100%;
+     border-collapse: collapse;
+     font-size: 16px;
+}
+
+th,
+td {
+     padding: 12px 15px;
+     text-align: center;
+     border-bottom: 1px solid #ddd;
+     word-wrap: break-word;
+}
+
+th {
+     background-image: linear-gradient(to right, #007BFF 0%, #00C6FF 51%, #007BFF 100%);
+     color: white;
+     white-space: nowrap;
+}
+
+tr:hover {
+     background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+     transform: scale(1.02);
+     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.highlight {
+     background-color: yellow;
+     font-weight: bold;
+}
+
+/* Action Buttons */
+.action-buttons {
+     display: flex;
+     gap: 8px;
+     justify-content: center;
+     flex-wrap: nowrap;
+}
+
+button {
+     padding: 6px 12px;
+     border: none;
+     border-radius: 5px;
+     cursor: pointer;
+     white-space: nowrap;
+     font-size: 14px;
+     transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+     margin: 0 2.5px;
+}
+
+button:active {
+     transform: scale(0.98);
+}
+
+.green-btn {
+     background: linear-gradient(45deg, rgb(80, 205, 78), rgb(68, 160, 89));
+     color: white;
+     box-shadow: 0 4px 15px rgba(76, 205, 196, 0.3);
+}
+
+.green-btn:hover {
+     background: linear-gradient(45deg, rgb(32, 231, 25), rgb(28, 219, 28));
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(76, 205, 196, 0.4);
+}
+
+.red-btn {
+     background: linear-gradient(45deg, rgb(252, 73, 73), rgb(255, 72, 63));
+     color: white;
+     box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.red-btn:hover {
+     background: linear-gradient(45deg, rgb(243, 46, 36), rgb(255, 0, 0));
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+button:disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+     background: #cccccc;
+     transform: none;
+     box-shadow: none;
+}
+
+button:disabled:hover {
+     transform: none;
+     box-shadow: none;
+}
+
+/* =========================================== */
+/*          RESPONSIVE STYLES                  */
+/* =========================================== */
+
+/* For Tablets and Mobiles */
+@media screen and (max-width: 768px) {
+     h1 {
+          font-size: 2em;
+     }
+
+     .table-container {
+          overflow-x: hidden;
+          padding: 10px;
+          background: none;
+          border: none;
+          box-shadow: none;
+     }
+
+     table {
+          border: 0;
+     }
+
+     /* Hide table headers but keep them accessible */
+     table thead {
+          border: none;
+          clip: rect(0 0 0 0);
+          height: 1px;
+          margin: -1px;
+          overflow: hidden;
+          padding: 0;
+          position: absolute;
+          width: 1px;
+     }
+
+     table tr {
+          display: block;
+          border-bottom: 3px solid #7B66FF;
+          margin-bottom: 1.5em;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          border-radius: 8px;
+          background: #fff;
+          padding: 10px;
+     }
+
+     tr:hover {
+          background-color: #fff;
+          /* Disable hover on card view */
+     }
+
+     table td {
+          display: block;
+          text-align: right;
+          /* Align cell content to the right */
+          font-size: 15px;
+          border-bottom: 1px dotted #ccc;
+          position: relative;
+          padding: 8px;
+          padding-left: 50%;
+          /* Make space for the label */
+     }
+
+     table td:last-child {
+          border-bottom: 0;
+     }
+
+     /* Add data labels before the cell content */
+     table td::before {
+          content: attr(data-label);
+          position: absolute;
+          left: 10px;
+          width: 45%;
+          padding-right: 10px;
+          white-space: nowrap;
+          text-align: left;
+          /* Align the label to the left */
+          font-weight: bold;
+          color: #333;
+     }
+
+     /* Special handling for the action buttons cell */
+     td[data-label="Actions"] {
+          padding-left: 10px;
+          text-align: center;
+     }
+
+     td[data-label="Actions"]::before {
+          content: "";
+          /* Hide the "Actions:" label to save space */
+     }
+
+     td[colspan] {
+          text-align: center !important;
+          padding-left: 0 !important;
+     }
+
+     td[colspan]::before {
+          content: none !important;
+     }
+}
+
+/* For Small Mobiles */
+@media screen and (max-width: 480px) {
+     .content-wrapper {
+          width: 100%;
+          padding: 15px 10px;
+     }
+
+     h1 {
+          font-size: 1.8em;
+     }
+
+     /* Stack search bar elements vertically */
+     .search-container {
+          flex-direction: column;
+          border-radius: 15px;
+          border: none;
+          background: none;
+          box-shadow: none;
+          gap: 10px;
+     }
+
+     #search {
+          width: 100%;
+          border-radius: 20px;
+          border: 2px solid #7B66FF;
+          text-align: center;
+          padding: 10px;
+     }
+
+     #search-button {
+          width: 100%;
+          border-radius: 20px;
+          padding: 12px;
+     }
+}

@@ -67,6 +67,9 @@ app.use('/books', bookRoutes);
 const profileRoutes = require('./routes/profile');
 app.use('/', profileRoutes);
 
+const adminRoutes = require('./routes/admin');
+app.use('/', adminRoutes);
+
 // Start server
 app.listen(3000, () => {
     console.log('Server running on http://localhost:3000');

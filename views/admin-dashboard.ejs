@@ -121,10 +121,12 @@
         });
 
         // Navigation buttons
-        document.getElementById('View members').onclick = () => window.location.href = '/view-members';
-        document.getElementById('Add books').onclick = () => window.location.href = '/add-books';
-        document.getElementById('Remove books').onclick = () => window.location.href = '/remove-books';
-        document.getElementById('Manage inventory').onclick = () => window.location.href = '/manage-inventory';
+        // Navigation buttons (all under /admin)
+        document.getElementById('Manage inventory').onclick = () => window.location.href = '/admin/manage-inventory';
+        document.getElementById('View members').onclick = () => window.location.href = '/admin/view-members';
+        document.getElementById('Add books').onclick = () => window.location.href = '/admin/add-books';
+        document.getElementById('Remove books').onclick = () => window.location.href = '/admin/remove-books';
+
 
         // Profile picture update
         editBtn.addEventListener('click', () => fileInput.click());
