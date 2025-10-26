@@ -75,7 +75,7 @@ form {
 .search-container {
      display: flex;
      align-items: center;
-     border: 2px solid #7B66FF;
+     border: 2px solid #007bff;
      border-radius: 50px;
      overflow: hidden;
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -100,7 +100,7 @@ form {
 #search-button {
      padding: 12px 25px;
      border: none;
-     background-image: linear-gradient(to right, #007BFF 0%, #00C6FF 51%, #007BFF 100%);
+     background-image: linear-gradient(to right, #007bff 0%, #00C6FF 51%, #007BFF 100%);
      color: #fff;
      font-size: 16px;
      font-weight: bold;
@@ -109,14 +109,14 @@ form {
      transition: all 0.4s ease;
 }
 
-#search-button:hover {
+/* #search-button:hover {
      box-shadow: 0 8px 20px 0 rgba(0, 123, 255, 0.55);
      transform: scale(1.05);
 }
 
 #search-button:active {
      transform: scale(1.15);
-}
+} */
 
 /* Table Container */
 .table-container {
@@ -133,6 +133,7 @@ table {
      width: 100%;
      border-collapse: collapse;
      font-size: 16px;
+     
 }
 
 th,
@@ -141,6 +142,7 @@ td {
      text-align: center;
      border-bottom: 1px solid #ddd;
      word-wrap: break-word;
+     
 }
 
 th {

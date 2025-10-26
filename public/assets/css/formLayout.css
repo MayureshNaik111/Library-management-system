@@ -1,0 +1,188 @@
+/* Global Reset and Box Sizing */
+*,
+*::before,
+*::after {
+     box-sizing: border-box;
+     margin: 0;
+     padding: 0;
+}
+
+html {
+     font-size: 16px; /* Set base font size for rem units */
+}
+
+body {
+     font-family: Arial, sans-serif;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     min-height: 100vh;
+     padding: 1rem; /* Add padding for small screens */
+}
+
+.background-container 
+{
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     z-index: -1; 
+     background-color: #050a1a;
+     background-image: 
+          radial-gradient(circle at 15% 85%, #00d4ff 0%, transparent 40%),
+          radial-gradient(circle at 80% 20%, #0050e0 0%, transparent 35%);
+     background-size: 300% 300%;
+     background-repeat: no-repeat;
+     animation: swirl-animation 20s ease-in-out infinite;
+}
+
+@keyframes swirl-animation 
+{
+     0% {
+          background-position: 0% 0%;
+     }
+     25% {
+          background-position: 25% 100%;
+     }
+     50% {
+          background-position: 100% 100%;
+     }
+     75% {
+          background-position: 80% 0%;
+     }
+     100% {
+          background-position: 0% 0%;
+     }
+}
+        
+
+/* Main form container */
+.container {
+     width: 100%;
+     max-width: 500px;
+     padding: 2rem;
+     background-color: rgba(255, 255, 255, 0.9);
+     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+     border-radius: 8px;
+}
+
+/* Heading */
+h2 {
+     font-size: 2rem;
+     text-align: center;
+     margin-bottom: 1.5rem;
+}
+
+/* Form Grouping */
+.form-group {
+     margin-bottom: 1.25rem;
+}
+
+/* Labels */
+label {
+     display: flex; /* Use flexbox for alignment */
+     align-items: center;
+     margin-bottom: 0.5rem;
+     font-size: 1rem;
+     font-weight: bold;
+}
+
+.input-hint {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 5px;
+  display: block;
+}
+
+.red-star {
+     color: red;
+     font-size: 1.2rem;
+     margin-left: 0.25rem;
+}
+
+/* Input fields */
+.input {
+     width: 100%;
+     padding: 0.75rem;
+     font-size: 1rem;
+     border: none;
+     border-bottom: 3px solid #333;
+     background: transparent;
+     border-radius: 4px 4px 0 0;
+     transition: border-color 0.3s ease;
+}
+
+.input:focus {
+     outline: none;
+     border-bottom-color: #7B66FF;
+}
+
+/* Styles for number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+     transform: scale(1.8);
+     opacity: 1;
+     cursor: pointer;
+     margin-left: 5px;
+}
+
+/* Submit Button */
+button[type="submit"] {
+     background-image: linear-gradient(to right, #007BFF 0%, #00C6FF 51%, #007BFF 100%);
+     background-size: 200% auto;
+     color: white;
+     padding: 14px;
+     border: none;
+     cursor: pointer;
+     width: 100%;
+     border-radius: 20px;
+     font-size: 18px;
+     font-weight: bold;
+     box-shadow: 0 4px 15px 0 rgba(0, 123, 255, 0.4);
+     transition: all 0.4s ease;
+     margin-top:1rem;
+}
+
+button[type="submit"]:hover {
+     background-position: right center;
+     transform: translateY(-3px);
+     box-shadow: 0 8px 20px 0 rgba(0, 123, 255, 0.55);
+}
+
+button[type="submit"]:active {
+     transform:scale(1.035);
+}
+
+/* Error messages */
+.error {
+     color: red;
+     font-size: 0.8rem;
+     display: block;
+     margin-top: 0.25rem;
+     min-height: 1em; /* Prevents layout shifts */
+}
+
+/* Media Query for Mobile Devices */
+@media (max-width: 480px) {
+     .container {
+     padding: 1.5rem;
+     }
+     h2 {
+     font-size: 1.75rem;
+     }
+}
+
+#Note {
+  background-color: #ddd;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+#Note-word {
+  color: red;
+}

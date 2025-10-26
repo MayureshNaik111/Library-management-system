@@ -12,8 +12,8 @@ function isAdmin(req, res, next) {
 
 // ✅ Manage Inventory
 router.get('/admin/manage-inventory', isAdmin, (req, res) => {
-    const sql = "SELECT * FROM books ORDER BY title ASC";
-    db.query("SELECT * FROM books ORDER BY title ASC", (err, results) => {
+    const sql = "SELECT * FROM books ORDER BY book_name ASC";
+    db.query("SELECT * FROM books ORDER BY book_name ASC", (err, results) => {
         if (err) {
             console.error("DB error:", err);
             return res.status(500).send("Database error");

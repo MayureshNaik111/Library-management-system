@@ -14,8 +14,8 @@ router.get('/add', (req, res) => {
 });
 
 router.post('/add', (req, res) => {
-    const { title, author, isbn } = req.body;
-    db.query('INSERT INTO books (title, author, isbn) VALUES (?, ?, ?)', [title, author, isbn], (err) => {
+    const { book_name, author_name, isbn } = req.body;
+    db.query('INSERT INTO books (book_name, author_name, isbn) VALUES (?, ?, ?)', [book_name, author_name, isbn], (err) => {
         if (err) throw err;
         res.redirect('/');
     });

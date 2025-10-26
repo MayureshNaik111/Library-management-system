@@ -44,8 +44,9 @@
           <tr>
             <th>Sl.No.</th>
             <th>ISBN No.</th>
-            <th>Title</th>
-            <th>Author</th>
+            <th>Book Name</th>
+            <th>Author Name</th>
+            <th>Publisher Name</th>
             <th>Available</th>
             <th>Borrowed</th>
             <th>Actions</th>
@@ -61,11 +62,14 @@
                 <td data-label="ISBN No.">
                   <%= book.isbn %>
                 </td>
-                <td data-label="Title">
-                  <%= book.title %>
+                <td data-label="Book Name">
+                  <%= book.book_name %>
                 </td>
-                <td data-label="Author">
-                  <%= book.author %>
+                <td data-label="Author Name">
+                  <%= book.author_name %>
+                </td>
+                <td data-label="Publisher Name">
+                  <%= book.publisher_name %>
                 </td>
                 <td data-label="Available">
                   <%= book.available %>
@@ -77,16 +81,18 @@
                   <div class="action-buttons">
                     <form action="AddBooks" method="GET">
                       <input type="hidden" name="isbn" value="<%= book.isbn %>">
-                      <input type="hidden" name="title" value="<%= book.title %>">
-                      <input type="hidden" name="author" value="<%= book.author %>">
+                      <input type="hidden" name="book_name" value="<%= book.book_name %>">
+                      <input type="hidden" name="author_name" value="<%= book.author_name %>">
+                      <input type="hidden" name="publisher_name" value="<%= book.publisher_name %>">
                       <button type="submit" name="add" class="green-btn">
                         <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
                       </button>
                     </form>
                     <form action="RemoveBooks" method="GET">
                       <input type="hidden" name="isbn" value="<%= book.isbn %>">
-                      <input type="hidden" name="title" value="<%= book.title %>">
-                      <input type="hidden" name="author" value="<%= book.author %>">
+                      <input type="hidden" name="book_name" value="<%= book.book_name %>">
+                      <input type="hidden" name="author_name" value="<%= book.author_name %>">
+                      <input type="hidden" name="publisher_name" value="<%= book.publisher_name %>">
                       <button type="submit" name="remove" class="red-btn" <%=book.available !=0 ? "" : "disabled" %>>
                         <i class="fa-solid fa-minus"></i>&nbsp;&nbsp;Remove
                       </button>
@@ -97,7 +103,7 @@
               <% }) %>
                 <% } else { %>
                   <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                       <center>The library is empty...</center>
                     </td>
                   </tr>
