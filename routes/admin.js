@@ -6,15 +6,27 @@ const db = require('../db/connection');
 // 1. Define BASE_URL
 const BASE_URL = process.env.BASE_URL || '/';
 
+// Helper function for PHP-style success alerts and redirects (moved from books.js for use here)
+const sendSuccessRedirect = (res, message, redirectPath = `${BASE_URL}admin/dashboard`) => {
+    return res.send(`
+        <script>
+            alert('${message}');
+            window.location.href='${redirectPath}';
+        </script>
+    `);
+};
+
 // Middleware to check admin
 function isAdmin(req, res, next) {
     if (req.session.user && req.session.user.role === 'admin') {
+        // Set isAdmin for the EJS template to consume
+        req.userIsAdmin = true; 
         return next();
     }
     return res.status(403).render('403'); // Forbidden page
 }
 
-// Helper function to render the form again with an error message and re-populated fields
+// Helper function to render the ADD BOOKS form again with an error message and re-populated fields
 const renderAddBooksForm = (req, res, msg, data = {}) => {
     res.render('admin/add-books', {
         user: req.session.user,
@@ -28,6 +40,24 @@ const renderAddBooksForm = (req, res, msg, data = {}) => {
     });
 };
 
+// Helper function to render the REMOVE BOOKS form again with errors and data (NEW HELPER)
+const renderRemoveBooksForm = (req, res, msg, msg2, data = {}) => {
+    res.render('admin/remove-books', {
+        user: req.session.user,
+        BASE_URL: BASE_URL,
+        // Crucial fix for ReferenceError in EJS:
+        isAdmin: true,
+        message: msg,
+        message2: msg2,
+        isbn: data.isbn || '',
+        bookName: data.bookName || '',
+        authorName: data.authorName || '',
+        publisherName: data.publisherName || '',
+        quantity: data.quantity || '1',
+    });
+};
+
+
 // =======================================================
 // ✅ GET Route to Display Add Books Form
 // =======================================================
@@ -36,13 +66,13 @@ router.get('/admin/add-books', isAdmin, (req, res) => {
 });
 
 // =======================================================
-// ✅ POST Route to Handle Form Submission (Robust String Comparison Added)
+// ✅ POST Route to Handle Add Books Submission
 // =======================================================
 router.post('/admin/add-books', isAdmin, async (req, res) => {
     const { isbn, bookName, authorName, publisherName, quantity } = req.body;
 
     try {
-        // 1. Check if the book ISBN already exists
+        // ... (existing logic for adding books remains here) ...
         const [rows] = await db.query('SELECT book_name, author_name, publisher_name FROM books WHERE isbn = ?', [isbn]);
 
         if (rows.length > 0) {
@@ -81,12 +111,7 @@ router.post('/admin/add-books', isAdmin, async (req, res) => {
             await db.query(sql, [isbn, bookName, authorName, publisherName, quantity, 0]);
 
             // Success: Alert and redirect
-            return res.send(`
-                <script>
-                    alert('Book(s) added successfully');
-                    window.location.href='${BASE_URL}admin/dashboard';
-                </script>
-            `);
+            return sendSuccessRedirect(res, 'Book(s) added successfully', `${BASE_URL}admin/dashboard`);
         }
 
     } catch (error) {
@@ -101,18 +126,15 @@ router.post('/admin/add-books', isAdmin, async (req, res) => {
 // ✅ Update Quantity (FINAL IMPLEMENTATION)
 // =======================================================
 router.get('/admin/update-quantity', isAdmin, async (req, res) => {
-    // Get the ISBN and quantity from the URL query parameters
+    // ... (existing update-quantity logic) ...
     const isbn = req.query.isbn;
-    const quantity = parseInt(req.query.quantity) || 1; // Ensure quantity is an integer
+    const quantity = parseInt(req.query.quantity) || 1; 
 
-    // We assume 'available' column holds the current stock count
     const sql = 'UPDATE books SET available = available + ? WHERE isbn = ?';
 
     try {
-        // Execute the update query
         await db.query(sql, [quantity, isbn]);
 
-        // After successful update, send a success message and redirect to the dashboard
         return res.send(`
             <script>
                 alert('${quantity} book(s) added successfully to existing inventory (ISBN: ${isbn})!');
@@ -132,9 +154,10 @@ router.get('/admin/update-quantity', isAdmin, async (req, res) => {
 
 
 // =======================================================
-// ✅ Manage Inventory (Converted to async/await)
+// ✅ Manage Inventory
 // =======================================================
 router.get('/admin/manage-inventory', isAdmin, async (req, res) => {
+    // ... (existing manage-inventory logic) ...
     const sql = "SELECT * FROM books ORDER BY book_name ASC";
 
     try {
@@ -162,13 +185,88 @@ router.get('/admin/view-members', isAdmin, (req, res) => {
 });
 
 // =======================================================
-// ✅ Remove Books
+// ✅ Remove Books (GET) - FIX APPLIED HERE
 // =======================================================
 router.get('/admin/remove-books', isAdmin, (req, res) => {
-    res.render('admin/remove-books', {
-        user: req.session.user,
-        BASE_URL: BASE_URL
-    });
+    // The previous error was here. We need to pass all expected variables.
+    renderRemoveBooksForm(req, res, '', '', req.query);
 });
+
+// =======================================================
+// ✅ Remove Books (POST) - NEW LOGIC INTEGRATED
+// =======================================================
+router.post('/admin/remove-books', isAdmin, async (req, res) => {
+    const { isbn, bookName, authorName, publisherName, quantity } = req.body;
+    const qty = parseInt(quantity, 10);
+
+    let message = ""; // For ISBN/details errors
+    let message2 = ""; // For quantity errors
+
+    try {
+        // 1. Check if book exists
+        const [rows] = await db.query('SELECT * FROM books WHERE isbn = ?', [isbn]);
+
+        if (rows.length === 0) {
+            message = "Invalid request! This book does not exist in the library.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
+
+        const bookDetails = rows[0];
+
+        // 2. Validate Book Details Match (using the robust comparison from add-books)
+        const dbBookName = (bookDetails.book_name || '').trim().toLowerCase();
+        const formBookName = (bookName || '').trim().toLowerCase();
+        const dbAuthorName = (bookDetails.author_name || '').trim().toLowerCase();
+        const formAuthorName = (authorName || '').trim().toLowerCase();
+        const dbPublisherName = (bookDetails.publisher_name || '').trim().toLowerCase();
+        const formPublisherName = (publisherName || '').trim().toLowerCase();
+
+        if (dbBookName !== formBookName || dbAuthorName !== formAuthorName || dbPublisherName !== formPublisherName) {
+            message = "Book details doesn't match with ISBN. Please enter the correct ISBN or check the book details.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
+
+        const quantityAvailable = bookDetails.available;
+
+        // 3. Validate Quantity
+        if (qty <= 0 || isNaN(qty)) {
+            message2 = "Invalid quantity entered. Quantity must be a positive number.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
+
+        if (qty > quantityAvailable) {
+            message2 = `Invalid quantity entered. Quantity to remove (${qty}) is more than the available quantity (${quantityAvailable}).`;
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
+
+        // 4. Perform Removal Logic
+        if (qty < quantityAvailable) {
+            // Case 4a: Decrease quantity
+            const sqlUpdate = "UPDATE books SET available = available - ? WHERE isbn = ?";
+            await db.query(sqlUpdate, [qty, isbn]);
+            return sendSuccessRedirect(res, 'Book(s) removed successfully');
+
+        } else if (qty === quantityAvailable) {
+            // Case 4b: Remove entirely
+            if (bookDetails.borrowed > 0) {
+                // Set available to 0 if still borrowed by someone
+                const sqlUpdateZero = "UPDATE books SET available = 0 WHERE isbn = ?";
+                await db.query(sqlUpdateZero, [isbn]);
+                return sendSuccessRedirect(res, 'Book(s) removed successfully! (Available set to zero)');
+            } else {
+                // Delete the record entirely
+                const sqlDelete = "DELETE FROM books WHERE isbn = ?";
+                await db.query(sqlDelete, [isbn]);
+                return sendSuccessRedirect(res, 'Book(s) permanently removed from library');
+            }
+        }
+
+    } catch (error) {
+        console.error("Database Error:", error);
+        message = "An unexpected database error occurred during book removal.";
+        return renderRemoveBooksForm(req, res, message, message2, req.body);
+    }
+});
+
 
 module.exports = router;
