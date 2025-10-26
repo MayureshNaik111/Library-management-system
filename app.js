@@ -43,7 +43,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Static files
-app.use(express.static('public'));
+// 💡 CRITICAL FIX: Use path.join(__dirname, 'public') to ensure Express 
+// reliably finds the 'public' directory regardless of the current working directory.
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Redirect root to login 
 app.get('/', (req, res) => {

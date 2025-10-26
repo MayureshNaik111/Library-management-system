@@ -65,6 +65,8 @@ h1 {
      text-align: center;
      margin-bottom: 20px;
      font-size: 2.5em;
+     /* Added text shadow for better contrast against background */
+     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 form {
@@ -75,7 +77,8 @@ form {
 .search-container {
      display: flex;
      align-items: center;
-     border: 2px solid #007bff;
+     /* Adjusted border color to match table header gradient */
+     border: 2px solid #00c6ff; 
      border-radius: 50px;
      overflow: hidden;
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -109,20 +112,19 @@ form {
      transition: all 0.4s ease;
 }
 
-/* #search-button:hover {
+#search-button:hover {
      box-shadow: 0 8px 20px 0 rgba(0, 123, 255, 0.55);
      transform: scale(1.05);
 }
 
 #search-button:active {
-     transform: scale(1.15);
-} */
+     transform: scale(0.98); /* Changed to 0.98 for a less aggressive click effect */
+} 
 
 /* Table Container */
 .table-container {
      width: 100%;
      overflow-x: auto;
-     /* Fallback for very wide tables on desktop */
      background-color: #fff;
      padding: 20px;
      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -149,20 +151,23 @@ th {
      background-image: linear-gradient(to right, #007BFF 0%, #00C6FF 51%, #007BFF 100%);
      color: white;
      white-space: nowrap;
+     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 tr:hover {
-     background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-     transform: scale(1.02);
-     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+     /* Lighten hover effect a bit */
+     background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+     transform: scale(1.005);
+     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.highlight {
+/* Highlight styles not applicable here, but kept for future use */
+/* .highlight {
      background-color: yellow;
      font-weight: bold;
-}
+} */
 
-/* Action Buttons */
+/* Action Buttons - Keeping existing styles */
 .action-buttons {
      display: flex;
      gap: 8px;
@@ -223,7 +228,7 @@ button:disabled:hover {
 }
 
 /* =========================================== */
-/*          RESPONSIVE STYLES                  */
+/* RESPONSIVE STYLES                 */
 /* =========================================== */
 
 /* For Tablets and Mobiles */
@@ -258,7 +263,8 @@ button:disabled:hover {
 
      table tr {
           display: block;
-          border-bottom: 3px solid #7B66FF;
+          /* Adjusted border color for contrast */
+          border-bottom: 3px solid #007bff; 
           margin-bottom: 1.5em;
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
           border-radius: 8px;
@@ -268,19 +274,19 @@ button:disabled:hover {
 
      tr:hover {
           background-color: #fff;
-          /* Disable hover on card view */
+          /* Disable hover transform on card view */
+          transform: none; 
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
      }
 
      table td {
           display: block;
           text-align: right;
-          /* Align cell content to the right */
           font-size: 15px;
           border-bottom: 1px dotted #ccc;
           position: relative;
           padding: 8px;
           padding-left: 50%;
-          /* Make space for the label */
      }
 
      table td:last-child {
@@ -296,9 +302,8 @@ button:disabled:hover {
           padding-right: 10px;
           white-space: nowrap;
           text-align: left;
-          /* Align the label to the left */
           font-weight: bold;
-          color: #333;
+          color: #007bff; /* Changed label color to blue for emphasis */
      }
 
      /* Special handling for the action buttons cell */
@@ -309,7 +314,12 @@ button:disabled:hover {
 
      td[data-label="Actions"]::before {
           content: "";
-          /* Hide the "Actions:" label to save space */
+     }
+
+     /* Ensure name stands out, matching the Name column we added */
+     td[data-label="Name"] {
+        font-weight: bold;
+        color: #1a1a1a;
      }
 
      td[colspan] {
@@ -346,7 +356,7 @@ button:disabled:hover {
      #search {
           width: 100%;
           border-radius: 20px;
-          border: 2px solid #7B66FF;
+          border: 2px solid #007bff;
           text-align: center;
           padding: 10px;
      }

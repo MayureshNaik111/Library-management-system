@@ -1,0 +1,76 @@
+<%#
+  NOTE: This template now uses correct column names (id, role, email) and hardcodes missing fields to N/A.
+%>
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Members</title>
+  <link rel="stylesheet" href="/assets/css/tableLayoutWithSearch.css" />
+  <script>
+    // Using AJAX for real time search
+    function searchMembers() 
+    {
+      const query = document.getElementById('search').value;
+      const xhr = new XMLHttpRequest();
+      // Using the correct admin search endpoint, now relying on the base '/' for BASE_URL
+      xhr.open('GET', '/api/admin/search-members?query=' + query, true); 
+      xhr.onreadystatechange = function()
+      {
+        if (xhr.readyState === 4 && xhr.status === 200)
+        {
+          // Assuming the AJAX call returns HTML table rows
+          document.getElementById('searchResults').innerHTML = xhr.responseText;
+        }
+      };
+      xhr.send();
+    }
+  </script>
+</head>
+<body>
+
+<div class="background-container"></div>
+
+<main class="content-wrapper">
+  <h1> View Members</h1>
+  <div class="search-container">
+    <input type="text" id="search" name="search" placeholder="Search here..." required 
+    onkeyup="searchMembers()"/>
+
+    <input type="button" id="search-button" value="Search" onclick="searchMembers()"/>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Sl.No.</th>
+          <th>User Type</th>
+          <th>User Id</th>
+          <th>Name</th> 
+          <th>Email Id</th>
+          </tr>
+      </thead>
+      <tbody id="searchResults">
+        <% if (members && members.length > 0) { %>
+          <% members.forEach(function(row, index) { %>
+            <tr>
+              <td data-label='Sl.No.'><%= index + 1 %></td>
+              <td data-label='User Type'><%= row.role %></td>
+              <td data-label='User Id'><%= row.id %></td>
+              <td data-label='Name'><%= row.name %></td> 
+              <td data-label='Email Id'><%= row.email %></td> 
+              </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan='5'><center>There are no users registered yet...</center></td> 
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

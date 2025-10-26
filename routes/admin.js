@@ -4,9 +4,10 @@ const router = express.Router();
 const db = require('../db/connection');
 
 // 1. Define BASE_URL
-const BASE_URL = process.env.BASE_URL || '/';
+// Using a simple slash is the most reliable way to handle static paths mounted at root.
+const BASE_URL = '/'; 
 
-// Helper function for PHP-style success alerts and redirects (moved from books.js for use here)
+// Helper function for PHP-style success alerts and redirects
 const sendSuccessRedirect = (res, message, redirectPath = `${BASE_URL}admin/dashboard`) => {
     return res.send(`
         <script>
@@ -18,13 +19,39 @@ const sendSuccessRedirect = (res, message, redirectPath = `${BASE_URL}admin/dash
 
 // Middleware to check admin
 function isAdmin(req, res, next) {
+    // Check if req.session.user and role exist
     if (req.session.user && req.session.user.role === 'admin') {
         // Set isAdmin for the EJS template to consume
         req.userIsAdmin = true; 
         return next();
     }
-    return res.status(403).render('403'); // Forbidden page
+    // Render the 403 Forbidden page if not admin
+    return res.status(403).render('403'); 
 }
+
+// =======================================================
+// ✅ FIXED HELPER: Function to build HTML table rows for members
+// Now returns ONLY 5 visible columns for consistency.
+// =======================================================
+const buildMemberRowsHtml = (members) => {
+    let rows = '';
+    if (members.length > 0) {
+        members.forEach((row, index) => {
+            rows += `<tr>
+                <td data-label='Sl.No.'>${index + 1}</td>
+                <td data-label='User Type'>${row.role}</td>
+                <td data-label='User Id'>${row.id}</td> 
+                <td data-label='Name'>${row.name}</td> 
+                <td data-label='Email Id'>${row.email}</td>
+                </tr>`;
+        });
+    } else {
+        // Colspan set to 5 to match the 5 headers
+        rows = `<tr><td colspan='5'><center>There are no users registered yet or no results found...</center></td></tr>`;
+    }
+    return rows;
+};
+
 
 // Helper function to render the ADD BOOKS form again with an error message and re-populated fields
 const renderAddBooksForm = (req, res, msg, data = {}) => {
@@ -174,26 +201,65 @@ router.get('/admin/manage-inventory', isAdmin, async (req, res) => {
     }
 });
 
+
 // =======================================================
-// ✅ View Members
+// 🚀 FIXED: View Members Route (Initial Page Load)
 // =======================================================
-router.get('/admin/view-members', isAdmin, (req, res) => {
-    res.render('admin/view-members', {
-        user: req.session.user,
-        BASE_URL: BASE_URL
-    });
+router.get('/admin/view-members', isAdmin, async (req, res) => {
+    // FIX: Ordering by id ASC (Ascending: 1, 2, 3...)
+    const sql = "SELECT id, role, name, email FROM users ORDER BY id ASC";
+
+    try {
+        const [members] = await db.query(sql);
+
+        res.render('admin/view-members', {
+            user: req.session.user,
+            BASE_URL: BASE_URL,
+            members: members 
+        });
+    } catch (error) {
+        console.error("View Members DB Error:", error);
+        res.status(500).send("Database error while fetching members.");
+    }
 });
 
 // =======================================================
-// ✅ Remove Books (GET) - FIX APPLIED HERE
+// 🚀 FIXED: AJAX Search Members Endpoint
+// =======================================================
+router.get('/api/admin/search-members', isAdmin, async (req, res) => {
+    const query = req.query.query ? `%${req.query.query}%` : '%%';
+    
+    // FIX: Ordering by id ASC (Ascending: 1, 2, 3...) for search results
+    const sql = `
+        SELECT id, role, name, email
+        FROM users 
+        WHERE id LIKE ? OR email LIKE ? OR role LIKE ? OR name LIKE ?
+        ORDER BY id ASC
+    `;
+
+    try {
+        // Pass the query parameter four times (id, email, role, name)
+        const [members] = await db.query(sql, [query, query, query, query]);
+        
+        // Return the HTML table rows directly for the AJAX call
+        const htmlRows = buildMemberRowsHtml(members);
+        res.send(htmlRows);
+
+    } catch (error) {
+        console.error("Search Members DB Error:", error);
+        res.status(500).send("<tr><td colspan='8'><center>Search failed due to a server error.</center></td></tr>");
+    }
+});
+
+// =======================================================
+// ✅ Remove Books (GET)
 // =======================================================
 router.get('/admin/remove-books', isAdmin, (req, res) => {
-    // The previous error was here. We need to pass all expected variables.
     renderRemoveBooksForm(req, res, '', '', req.query);
 });
 
 // =======================================================
-// ✅ Remove Books (POST) - NEW LOGIC INTEGRATED
+// ✅ Remove Books (POST)
 // =======================================================
 router.post('/admin/remove-books', isAdmin, async (req, res) => {
     const { isbn, bookName, authorName, publisherName, quantity } = req.body;
