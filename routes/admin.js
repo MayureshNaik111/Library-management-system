@@ -42,7 +42,6 @@ const buildMemberRowsHtml = (members) => {
                 <td data-label='User Type'>${row.role}</td>
                 <td data-label='User Id'>${row.id}</td> 
                 <td data-label='Name'>${row.name}</td> 
-                <td data-label='Email Id'>${row.email}</td>
                 </tr>`;
         });
     } else {

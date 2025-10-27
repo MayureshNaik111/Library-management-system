@@ -79,7 +79,7 @@
                 </td>
                 <td data-label="Actions">
                   <div class="action-buttons">
-                    <form action="AddBooks" method="GET">
+                    <form action="add-books" method="GET">
                       <input type="hidden" name="isbn" value="<%= book.isbn %>">
                       <input type="hidden" name="book_name" value="<%= book.book_name %>">
                       <input type="hidden" name="author_name" value="<%= book.author_name %>">
@@ -88,7 +88,7 @@
                         <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
                       </button>
                     </form>
-                    <form action="RemoveBooks" method="GET">
+                    <form action="remove-books" method="GET">
                       <input type="hidden" name="isbn" value="<%= book.isbn %>">
                       <input type="hidden" name="book_name" value="<%= book.book_name %>">
                       <input type="hidden" name="author_name" value="<%= book.author_name %>">
