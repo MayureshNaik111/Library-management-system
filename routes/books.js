@@ -12,34 +12,34 @@ const BASE_URL = process.env.BASE_URL || '/';
 // ----------------------------------------------------------------------
 const sendSuccessRedirect = (res, message, redirectPath = '/adminDashboard') => {
     return res.send(`
-        <script>
-            alert('${message}');
-            window.location.href='${redirectPath}';
-        </script>
-    `);
+        <script>
+            alert('${message}');
+            window.location.href='${redirectPath}';
+        </script>
+    `);
 };
 
 // ----------------------------------------------------------------------
 // --- ADD BOOKS ROUTES (/add-books) ---
 // ----------------------------------------------------------------------
 
-// --- GET Route: Display the Add Books Form ---
+// --- GET Route: Display the Add Books Form (CORRECT: Reads snake_case and passes camelCase) ---
 router.get('/add-books', ensureAdmin, (req, res) => {
-    // Render the EJS file, passing initial values (often empty)
+    // Reads snake_case from URL (req.query) but passes camelCase to EJS
     res.render('add-books', {
         userId: req.session.userId, // Assuming session is handled by Express-session
         userType: req.session.userType,
         message: '',
         isbn: req.query.isbn || '',
-        bookName: req.query.bookName || '',
-        authorName: req.query.authorName || '',
-        publisherName: req.query.publisherName || '',
+        bookName: req.query.book_name || '',        // Reads book_name (Corrected)
+        authorName: req.query.author_name || '',    // Reads author_name (Corrected)
+        publisherName: req.query.publisher_name || '', // Reads publisher_name (Corrected)
         quantity: req.query.quantity || '1',
         BASE_URL: BASE_URL // Pass config variables
     });
 });
 
-// --- POST Route: Handle Form Submission ---
+// --- POST Route: Handle Form Submission (FIXED: Updated DB column names in SQL and comparison) ---
 router.post('/add-books', ensureAdmin, async (req, res) => {
     const { isbn, bookName, authorName, publisherName, quantity } = req.body;
     let message = "";
@@ -61,19 +61,20 @@ router.post('/add-books', ensureAdmin, async (req, res) => {
 
         if (rows.length > 0) {
             const bookDetails = rows[0];
-            // Check if entered details match existing book
-            if (bookDetails.bookName === bookName && bookDetails.authorName === authorName && bookDetails.publisherName === publisherName) {
+
+            // FIX 1A: Comparison must use snake_case for DB columns
+            if (bookDetails.book_name === bookName && bookDetails.author_name === authorName && bookDetails.publisher_name === publisherName) {
                 // Book exists, prompt to update quantity (requires client-side logic to handle this redirect)
                 return res.send(`
-                    <script>
-                        // NOTE: Using alert/confirm in production is discouraged. Consider a modal UI.
-                        if (confirm('This book already exists in the library. Do you want to add more quantity of this book into the library?')) {
-                            window.location.href = '/books/update-quantity?isbn=${isbn}&quantity=${quantity}';
-                        } else {
-                            window.location.href = '/books/add-books';
-                        }
-                    </script>
-                `);
+                    <script>
+                        // NOTE: Using alert/confirm in production is discouraged. Consider a modal UI.
+                        if (confirm('This book already exists in the library. Do you want to add more quantity of this book into the library?')) {
+                            window.location.href = '/books/update-quantity?isbn=${isbn}&quantity=${quantity}';
+                        } else {
+                            window.location.href = '/books/add-books';
+                        }
+                    </script>
+                `);
             } else {
                 // Details don't match
                 message = "Book details don't match with ISBN. Please enter the correct ISBN or check the book details.";
@@ -81,7 +82,8 @@ router.post('/add-books', ensureAdmin, async (req, res) => {
             }
         } else {
             // 2. Book does not exist, insert new book
-            const sql = 'INSERT INTO books (isbn, bookName, authorName, publisherName, available, borrowed) VALUES (?, ?, ?, ?, ?, ?)';
+            // FIX 1B: Update SQL query to use snake_case column names
+            const sql = 'INSERT INTO books (isbn, book_name, author_name, publisher_name, available, borrowed) VALUES (?, ?, ?, ?, ?, ?)';
             await db.query(sql, [isbn, bookName, authorName, publisherName, quantity, 0]);
 
             // Success message and redirect
@@ -100,7 +102,7 @@ router.post('/add-books', ensureAdmin, async (req, res) => {
 // --- REMOVE BOOKS ROUTES (/remove-books) (New Logic) ---
 // ----------------------------------------------------------------------
 
-// --- GET Route: Display the Remove Books Form ---
+// --- GET Route: Display the Remove Books Form (CORRECT: Reads snake_case and passes camelCase) ---
 router.get('/remove-books', ensureAdmin, (req, res) => {
     // Render the EJS file, passing initial values from query or defaults
     res.render('remove-books', {
@@ -109,16 +111,16 @@ router.get('/remove-books', ensureAdmin, (req, res) => {
         message: '', // book error
         message2: '', // quantity error
         isbn: req.query.isbn || '',
-        bookName: req.query.bookName || '',
-        authorName: req.query.authorName || '',
-        publisherName: req.query.publisherName || '',
+        bookName: req.query.book_name || '',        // Reads book_name (Corrected)
+        authorName: req.query.author_name || '',    // Reads author_name (Corrected)
+        publisherName: req.query.publisher_name || '', // Reads publisher_name (Corrected)
         quantity: req.query.quantity || '1',
         BASE_URL: BASE_URL,
         isAdmin: (req.session.userType === 'Admin') // EJS needs this for conditional rendering (if used)
     });
 });
 
-// --- POST Route: Handle Book Removal ---
+// --- POST Route: Handle Book Removal (FIXED: Updated comparison) ---
 router.post('/remove-books', ensureAdmin, async (req, res) => {
     const { isbn, bookName, authorName, publisherName, quantity } = req.body;
     const qty = parseInt(quantity, 10);
@@ -151,7 +153,8 @@ router.post('/remove-books', ensureAdmin, async (req, res) => {
         const bookDetails = rows[0];
 
         // 2. Validate Book Details Match
-        if (bookDetails.bookName !== bookName || bookDetails.authorName !== authorName || bookDetails.publisherName !== publisherName) {
+        // FIX 2: Comparison must use snake_case for DB columns
+        if (bookDetails.book_name !== bookName || bookDetails.author_name !== authorName || bookDetails.publisher_name !== publisherName) {
             message = "Book details doesn't match with ISBN. Please enter the correct ISBN or check the book details.";
             return renderFormWithError(message, message2);
         }
@@ -202,8 +205,7 @@ router.post('/remove-books', ensureAdmin, async (req, res) => {
 
 
 // ----------------------------------------------------------------------
-// --- API Route: Fetch Book Details by ISBN (Needed for client-side JS) ---
-// The original PHP relied on `getBookDetailsByISBN.php`, here is the Express equivalent:
+// --- API Route: Fetch Book Details by ISBN (FIXED: Corrected SELECT and Response) ---
 // ----------------------------------------------------------------------
 router.post('/getBookDetailsByISBN', async (req, res) => {
     // Note: Assuming client-side JS sends JSON or URL-encoded data
@@ -214,15 +216,17 @@ router.post('/getBookDetailsByISBN', async (req, res) => {
     }
 
     try {
-        const [rows] = await db.query('SELECT bookName, authorName, publisherName FROM books WHERE isbn = ?', [isbn]);
-        
+        // FIX 3A: Select the correct snake_case column names
+        const [rows] = await db.query('SELECT book_name, author_name, publisher_name FROM books WHERE isbn = ?', [isbn]);
+
         if (rows.length > 0) {
             const book = rows[0];
             return res.json({
                 success: true,
-                bookName: book.bookName,
-                authorName: book.authorName,
-                publisherName: book.publisherName
+                // FIX 3B: Use the snake_case properties from the DB query result
+                bookName: book.book_name,
+                authorName: book.author_name,
+                publisherName: book.publisher_name
             });
         } else {
             return res.json({ success: false, message: 'Book not found.' });

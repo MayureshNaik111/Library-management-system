@@ -21,6 +21,29 @@
       };
       xhr.send();
     }
+
+    function changeQuantity(isbn, action) {
+    const url = action === 'add' ? '/api/inventory/add-one' : '/api/inventory/remove-one';
+
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isbn: isbn }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Refresh page to update inventory display
+        window.location.reload();
+      } else {
+        alert(data.message || 'Operation failed.');
+      }
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      alert('Error performing request.');
+    });
+  }
   </script>
 </head>
 
@@ -79,24 +102,14 @@
                 </td>
                 <td data-label="Actions">
                   <div class="action-buttons">
-                    <form action="add-books" method="GET">
-                      <input type="hidden" name="isbn" value="<%= book.isbn %>">
-                      <input type="hidden" name="book_name" value="<%= book.book_name %>">
-                      <input type="hidden" name="author_name" value="<%= book.author_name %>">
-                      <input type="hidden" name="publisher_name" value="<%= book.publisher_name %>">
-                      <button type="submit" name="add" class="green-btn">
-                        <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
-                      </button>
-                    </form>
-                    <form action="remove-books" method="GET">
-                      <input type="hidden" name="isbn" value="<%= book.isbn %>">
-                      <input type="hidden" name="book_name" value="<%= book.book_name %>">
-                      <input type="hidden" name="author_name" value="<%= book.author_name %>">
-                      <input type="hidden" name="publisher_name" value="<%= book.publisher_name %>">
-                      <button type="submit" name="remove" class="red-btn" <%=book.available !=0 ? "" : "disabled" %>>
-                        <i class="fa-solid fa-minus"></i>&nbsp;&nbsp;Remove
-                      </button>
-                    </form>
+                    <button class="green-btn" onclick="changeQuantity('<%= book.isbn %>', 'add')">
+                      <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
+                    </button>
+
+                    <button class="red-btn" onclick="changeQuantity('<%= book.isbn %>', 'remove')" <%=book.available !=0
+                      ? "" : "disabled" %>>
+                      <i class="fa-solid fa-minus"></i>&nbsp;&nbsp;Remove
+                    </button>
                   </div>
                 </td>
               </tr>
