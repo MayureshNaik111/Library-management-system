@@ -95,20 +95,18 @@ router.post('/api/inventory/remove-one', isAdmin, async (req, res) => {
 // =======================================================
 
 const buildMemberRowsHtml = (members) => {
-    let rows = '';
-    if (members.length > 0) {
-        members.forEach((row, index) => {
-            rows += `<tr>
-                <td data-label='Sl.No.'>${index + 1}</td>
-                <td data-label='User Type'>${row.role}</td>
-                <td data-label='User Id'>${row.id}</td> 
-                <td data-label='Name'>${row.name}</td> 
-                </tr>`;
-        });
-    } else {
-        rows = `<tr><td colspan='5'><center>There are no users registered yet or no results found...</center></td></tr>`;
+    if (!members || members.length === 0) {
+        return `<tr><td colspan='4'><center>There are no users registered yet or no results found...</center></td></tr>`;
     }
-    return rows;
+
+    return members.map((row, index) => `
+    <tr>
+      <td data-label='User Id'>${row.id || 'N/A'}</td>
+      <td data-label='User Type'>${row.role || 'N/A'}</td>
+      <td data-label='Name'>${row.name || 'N/A'}</td>
+      <td data-label='Email Id'>${row.email || 'N/A'}</td>
+    </tr>
+  `).join('');
 };
 
 
@@ -269,22 +267,21 @@ router.get('/admin/view-members', isAdmin, async (req, res) => {
 router.get('/api/admin/search-members', isAdmin, async (req, res) => {
     const query = req.query.query ? `%${req.query.query}%` : '%%';
 
+    // Important: write SQL in a single clean template literal (no leading spaces)
     const sql = `
-        SELECT id, role, name, email
-        FROM users 
-        WHERE id LIKE ? OR email LIKE ? OR role LIKE ? OR name LIKE ?
-        ORDER BY id ASC
-    `;
+SELECT id, role, name, email
+FROM users
+WHERE id LIKE ? OR email LIKE ? OR role LIKE ? OR name LIKE ?
+ORDER BY id ASC
+  `;
 
     try {
         const [members] = await db.query(sql, [query, query, query, query]);
-
         const htmlRows = buildMemberRowsHtml(members);
         res.send(htmlRows);
-
     } catch (error) {
         console.error("Search Members DB Error:", error);
-        res.status(500).send("<tr><td colspan='8'><center>Search failed due to a server error.</center></td></tr>");
+        res.status(500).send("<tr><td colspan='4'><center>Search failed due to a server error.</center></td></tr>");
     }
 });
 
