@@ -4,7 +4,7 @@ const router = express.Router();
 const db = require('../db/connection');
 
 // 1. Define BASE_URL
-const BASE_URL = '/'; 
+const BASE_URL = '/';
 
 // Helper function for PHP-style success alerts and redirects (IMPROVED for cleaner calls)
 const sendSuccessRedirect = (res, message, redirectPath = 'admin/dashboard') => {
@@ -19,16 +19,16 @@ const sendSuccessRedirect = (res, message, redirectPath = 'admin/dashboard') => 
 // Middleware to check admin (CRITICAL FIX APPLIED)
 function isAdmin(req, res, next) {
     // Check if user object exists AND role matches (using lowercase 'admin' as per original code)
-    if (req.session.user && req.session.user.role === 'admin') { 
-        req.userIsAdmin = true; 
+    if (req.session.user && req.session.user.role === 'admin') {
+        req.userIsAdmin = true;
         return next();
     }
-    
+
     // Render the 403 Forbidden page if not admin
     return res.status(403).render('403', {
         user: req.session.user, // Pass user, even if undefined
         BASE_URL: BASE_URL
-    }); 
+    });
 }
 
 // =======================================================
@@ -38,13 +38,22 @@ function isAdmin(req, res, next) {
 // API to increment available quantity by 1
 router.post('/api/inventory/add-one', isAdmin, async (req, res) => {
     const { isbn } = req.body;
-    
+
     try {
-        const sql = 'UPDATE books SET available = available + 1 WHERE isbn = ?';
-        await db.query(sql, [isbn]);
-        
-        // Respond with success. The frontend will handle the page refresh.
-        res.json({ success: true, message: 'Quantity incremented by 1.' });
+        // Update available quantity by 1
+        const sqlUpdate = 'UPDATE books SET available = available + 1 WHERE isbn = ?';
+        await db.query(sqlUpdate, [isbn]);
+
+        // Fetch the updated book record
+        const sqlSelect = 'SELECT isbn, available, borrowed FROM books WHERE isbn = ?';
+        const [rows] = await db.query(sqlSelect, [isbn]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Book not found after update.' });
+        }
+
+        // Respond with success and updated book info
+        res.json({ success: true, updatedBook: rows[0] });
     } catch (error) {
         console.error("Add One DB Error:", error);
         res.status(500).json({ success: false, message: 'Database error while adding quantity.' });
@@ -52,25 +61,31 @@ router.post('/api/inventory/add-one', isAdmin, async (req, res) => {
 });
 
 // API to decrement available quantity by 1
+// In admin.js, change the remove-one API to:
+
 router.post('/api/inventory/remove-one', isAdmin, async (req, res) => {
     const { isbn } = req.body;
-    
-    try {
-        // Check current quantity to prevent going below zero
-        const [rows] = await db.query('SELECT available, borrowed FROM books WHERE isbn = ?', [isbn]);
 
+    try {
+        const [rows] = await db.query('SELECT available, borrowed FROM books WHERE isbn = ?', [isbn]);
         if (rows.length === 0 || rows[0].available <= 0) {
-             return res.json({ success: false, message: 'Cannot remove. Available quantity is zero or book not found.' });
+            return res.status(400).json({ success: false, message: 'Cannot remove. No available quantity.' });
         }
 
-        const sql = 'UPDATE books SET available = available - 1 WHERE isbn = ? AND available > 0';
-        await db.query(sql, [isbn]);
-        
-        // Respond with success. The frontend will handle the page refresh.
-        res.json({ success: true, message: 'Quantity decremented by 1.' });
+        await db.query('UPDATE books SET available = available - 1 WHERE isbn = ? AND available > 0', [isbn]);
+
+        // Fetch updated book info
+        const [updatedRows] = await db.query('SELECT isbn, available, borrowed FROM books WHERE isbn = ?', [isbn]);
+        if (updatedRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Book not found after update.' });
+        }
+
+        // Return updated book for frontend real-time update
+        res.json({ success: true, updatedBook: updatedRows[0] });
+
     } catch (error) {
-        console.error("Remove One DB Error:", error);
-        res.status(500).json({ success: false, message: 'Database error while removing quantity.' });
+        console.error('Remove error:', error);
+        res.status(500).json({ success: false, message: 'Error removing quantity.' });
     }
 });
 
@@ -80,75 +95,75 @@ router.post('/api/inventory/remove-one', isAdmin, async (req, res) => {
 // =======================================================
 
 const buildMemberRowsHtml = (members) => {
-    let rows = '';
-    if (members.length > 0) {
-        members.forEach((row, index) => {
-            rows += `<tr>
+    let rows = '';
+    if (members.length > 0) {
+        members.forEach((row, index) => {
+            rows += `<tr>
                 <td data-label='Sl.No.'>${index + 1}</td>
                 <td data-label='User Type'>${row.role}</td>
                 <td data-label='User Id'>${row.id}</td> 
                 <td data-label='Name'>${row.name}</td> 
                 </tr>`;
-        });
-    } else {
-        rows = `<tr><td colspan='5'><center>There are no users registered yet or no results found...</center></td></tr>`;
-    }
-    return rows;
+        });
+    } else {
+        rows = `<tr><td colspan='5'><center>There are no users registered yet or no results found...</center></td></tr>`;
+    }
+    return rows;
 };
 
 
 const renderAddBooksForm = (req, res, msg, data = {}) => {
-    res.render('admin/add-books', {
-        user: req.session.user,
-        BASE_URL: BASE_URL,
-        message: msg,
-        isbn: data.isbn || '', 
-        bookName: data.book_name || data.bookName || '', 
-        authorName: data.author_name || data.authorName || '', 
-        publisherName: data.publisher_name || data.publisherName || '', 
-        quantity: data.quantity || '1'
-    });
+    res.render('admin/add-books', {
+        user: req.session.user,
+        BASE_URL: BASE_URL,
+        message: msg,
+        isbn: data.isbn || '',
+        bookName: data.book_name || data.bookName || '',
+        authorName: data.author_name || data.authorName || '',
+        publisherName: data.publisher_name || data.publisherName || '',
+        quantity: data.quantity || '1'
+    });
 };
 
 const renderRemoveBooksForm = (req, res, msg, msg2, data = {}) => {
-    res.render('admin/remove-books', {
-        user: req.session.user,
-        BASE_URL: BASE_URL,
-        isAdmin: true,
-        message: msg,
-        message2: msg2,
-        isbn: data.isbn || '',
-        bookName: data.bookName || '',
-        authorName: data.authorName || '',
-        publisherName: data.publisherName || '',
-        quantity: data.quantity || '1',
-    });
+    res.render('admin/remove-books', {
+        user: req.session.user,
+        BASE_URL: BASE_URL,
+        isAdmin: true,
+        message: msg,
+        message2: msg2,
+        isbn: data.isbn || '',
+        bookName: data.bookName || '',
+        authorName: data.authorName || '',
+        publisherName: data.publisherName || '',
+        quantity: data.quantity || '1',
+    });
 };
 
 router.get('/admin/add-books', isAdmin, (req, res) => {
-    renderAddBooksForm(req, res, '');
+    renderAddBooksForm(req, res, '');
 });
 
 router.post('/admin/add-books', isAdmin, async (req, res) => {
-    const { isbn, bookName, authorName, publisherName, quantity } = req.body;
+    const { isbn, bookName, authorName, publisherName, quantity } = req.body;
 
-    try {
-        const [rows] = await db.query('SELECT book_name, author_name, publisher_name FROM books WHERE isbn = ?', [isbn]);
+    try {
+        const [rows] = await db.query('SELECT book_name, author_name, publisher_name FROM books WHERE isbn = ?', [isbn]);
 
-        if (rows.length > 0) {
-            const bookDetails = rows[0];
+        if (rows.length > 0) {
+            const bookDetails = rows[0];
 
-            const dbBookName = (bookDetails.book_name || '').trim().toLowerCase();
-            const formBookName = (bookName || '').trim().toLowerCase();
-            const dbAuthorName = (bookDetails.author_name || '').trim().toLowerCase();
-            const formAuthorName = (authorName || '').trim().toLowerCase();
-            const dbPublisherName = (bookDetails.publisher_name || '').trim().toLowerCase();
-            const formPublisherName = (publisherName || '').trim().toLowerCase();
+            const dbBookName = (bookDetails.book_name || '').trim().toLowerCase();
+            const formBookName = (bookName || '').trim().toLowerCase();
+            const dbAuthorName = (bookDetails.author_name || '').trim().toLowerCase();
+            const formAuthorName = (authorName || '').trim().toLowerCase();
+            const dbPublisherName = (bookDetails.publisher_name || '').trim().toLowerCase();
+            const formPublisherName = (publisherName || '').trim().toLowerCase();
 
-            if (dbBookName === formBookName &&
-                dbAuthorName === formAuthorName &&
-                dbPublisherName === formPublisherName) {
-                return res.send(`
+            if (dbBookName === formBookName &&
+                dbAuthorName === formAuthorName &&
+                dbPublisherName === formPublisherName) {
+                return res.send(`
                     <script>
                         if (confirm('This book already exists in the library. Do you want to add more quantity of this book into the library?')) {
                             window.location.href = '${BASE_URL}admin/update-quantity?isbn=${isbn}&quantity=${quantity}';
@@ -157,181 +172,197 @@ router.post('/admin/add-books', isAdmin, async (req, res) => {
                         }
                     </script>
                 `);
-            } else {
-                const message = "Book details don't match with ISBN. Please enter the correct ISBN or check the book details.";
-                return renderAddBooksForm(req, res, message, req.body);
-            }
-        } else {
-            const sql = 'INSERT INTO books (isbn, book_name, author_name, publisher_name, available, borrowed) VALUES (?, ?, ?, ?, ?, ?)';
-            await db.query(sql, [isbn, bookName, authorName, publisherName, quantity, 0]);
+            } else {
+                const message = "Book details don't match with ISBN. Please enter the correct ISBN or check the book details.";
+                return renderAddBooksForm(req, res, message, req.body);
+            }
+        } else {
+            const sql = 'INSERT INTO books (isbn, book_name, author_name, publisher_name, available, borrowed) VALUES (?, ?, ?, ?, ?, ?)';
+            await db.query(sql, [isbn, bookName, authorName, publisherName, quantity, 0]);
 
-            return sendSuccessRedirect(res, 'Book(s) added successfully', 'admin/dashboard');
-        }
+            return sendSuccessRedirect(res, 'Book(s) added successfully', 'admin/dashboard');
+        }
 
-    } catch (error) {
-        console.error("Database Error:", error);
-        const message = "An unexpected error occurred while processing your request. Please check server logs for details.";
-        return renderAddBooksForm(req, res, message, req.body);
-    }
+    } catch (error) {
+        console.error("Database Error:", error);
+        const message = "An unexpected error occurred while processing your request. Please check server logs for details.";
+        return renderAddBooksForm(req, res, message, req.body);
+    }
 });
 
 router.get('/admin/update-quantity', isAdmin, async (req, res) => {
-    const isbn = req.query.isbn;
-    const quantity = parseInt(req.query.quantity) || 1; 
+    const isbn = req.query.isbn;
+    const quantity = parseInt(req.query.quantity) || 1;
 
-    const sql = 'UPDATE books SET available = available + ? WHERE isbn = ?';
+    const sql = 'UPDATE books SET available = available + ? WHERE isbn = ?';
 
-    try {
-        await db.query(sql, [quantity, isbn]);
+    try {
+        await db.query(sql, [quantity, isbn]);
 
-        return res.send(`
+        return res.send(`
             <script>
                 alert('${quantity} book(s) added successfully to existing inventory (ISBN: ${isbn})!');
                 window.location.href='${BASE_URL}admin/dashboard'; 
             </script>
         `);
-    } catch (error) {
-        console.error("Update Quantity DB Error:", error);
-        return res.status(500).send(`
+    } catch (error) {
+        console.error("Update Quantity DB Error:", error);
+        return res.status(500).send(`
             <script>
                 alert('Error updating book quantity. Check server logs.');
                 window.location.href='${BASE_URL}admin/add-books';
             </script>
         `);
-    }
+    }
 });
 
 router.get('/admin/manage-inventory', isAdmin, async (req, res) => {
-    const sql = "SELECT * FROM books ORDER BY book_name ASC";
+    const sql = "SELECT * FROM books ORDER BY book_name ASC";
 
-    try {
-        const [results] = await db.query(sql);
+    try {
+        const [results] = await db.query(sql);
 
-        res.render("admin/manage-inventory", {
-            user: req.session.user,
-            books: results,
-            BASE_URL: BASE_URL
-        });
-    } catch (err) {
-        console.error("DB error:", err);
-        return res.status(500).send("Database error");
-    }
+        res.render("admin/manage-inventory", {
+            user: req.session.user,
+            books: results,
+            BASE_URL: BASE_URL
+        });
+    } catch (err) {
+        console.error("DB error:", err);
+        return res.status(500).send("Database error");
+    }
+});
+
+router.get('/search_ManageInventory', isAdmin, async (req, res) => {
+    const query = req.query.query ? `%${req.query.query}%` : '%%';
+    const sql = `
+        SELECT * FROM books
+        WHERE book_name LIKE ? OR author_name LIKE ? OR publisher_name LIKE ? OR isbn LIKE ?
+    `;
+    try {
+        const [books] = await db.query(sql, [query, query, query, query]);
+        // Render only table rows!
+        res.render('partials/manageInventoryTableRows', { books });
+    } catch (err) {
+        console.error("Search ManageInventory DB Error:", err);
+        res.status(500).send("<tr><td colspan='8'><center>Search failed due to a server error.</center></td></tr>");
+    }
 });
 
 router.get('/admin/view-members', isAdmin, async (req, res) => {
-    const sql = "SELECT id, role, name, email FROM users ORDER BY id ASC";
+    const sql = "SELECT id, role, name, email FROM users ORDER BY id ASC";
 
-    try {
-        const [members] = await db.query(sql);
+    try {
+        const [members] = await db.query(sql);
 
-        res.render('admin/view-members', {
-            user: req.session.user,
-            BASE_URL: BASE_URL,
-            members: members 
-        });
-    } catch (error) {
-        console.error("View Members DB Error:", error);
-        res.status(500).send("Database error while fetching members.");
-    }
+        res.render('admin/view-members', {
+            user: req.session.user,
+            BASE_URL: BASE_URL,
+            members: members
+        });
+    } catch (error) {
+        console.error("View Members DB Error:", error);
+        res.status(500).send("Database error while fetching members.");
+    }
 });
 
 router.get('/api/admin/search-members', isAdmin, async (req, res) => {
-    const query = req.query.query ? `%${req.query.query}%` : '%%';
-    
-    const sql = `
+    const query = req.query.query ? `%${req.query.query}%` : '%%';
+
+    const sql = `
         SELECT id, role, name, email
         FROM users 
         WHERE id LIKE ? OR email LIKE ? OR role LIKE ? OR name LIKE ?
         ORDER BY id ASC
     `;
 
-    try {
-        const [members] = await db.query(sql, [query, query, query, query]);
-        
-        const htmlRows = buildMemberRowsHtml(members);
-        res.send(htmlRows);
+    try {
+        const [members] = await db.query(sql, [query, query, query, query]);
 
-    } catch (error) {
-        console.error("Search Members DB Error:", error);
-        res.status(500).send("<tr><td colspan='8'><center>Search failed due to a server error.</center></td></tr>");
-    }
+        const htmlRows = buildMemberRowsHtml(members);
+        res.send(htmlRows);
+
+    } catch (error) {
+        console.error("Search Members DB Error:", error);
+        res.status(500).send("<tr><td colspan='8'><center>Search failed due to a server error.</center></td></tr>");
+    }
 });
 
 router.get('/admin/remove-books', isAdmin, (req, res) => {
-    renderRemoveBooksForm(req, res, '', '', req.query);
+    renderRemoveBooksForm(req, res, '', '', req.query);
 });
 
 router.post('/admin/remove-books', isAdmin, async (req, res) => {
-    const { isbn, bookName, authorName, publisherName, quantity } = req.body;
-    const qty = parseInt(quantity, 10);
+    const { isbn, bookName, authorName, publisherName, quantity } = req.body;
+    const qty = parseInt(quantity, 10);
 
-    let message = ""; // For ISBN/details errors
-    let message2 = ""; // For quantity errors
+    let message = ""; // For ISBN/details errors
+    let message2 = ""; // For quantity errors
 
-    try {
-        // 1. Check if book exists
-        const [rows] = await db.query('SELECT * FROM books WHERE isbn = ?', [isbn]);
+    try {
+        // 1. Check if book exists
+        const [rows] = await db.query('SELECT * FROM books WHERE isbn = ?', [isbn]);
 
-        if (rows.length === 0) {
-            message = "Invalid request! This book does not exist in the library.";
-            return renderRemoveBooksForm(req, res, message, message2, req.body);
-        }
+        if (rows.length === 0) {
+            message = "Invalid request! This book does not exist in the library.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
 
-        const bookDetails = rows[0];
+        const bookDetails = rows[0];
 
-        // 2. Validate Book Details Match (using the robust comparison from add-books)
-        const dbBookName = (bookDetails.book_name || '').trim().toLowerCase();
-        const formBookName = (bookName || '').trim().toLowerCase();
-        const dbAuthorName = (bookDetails.author_name || '').trim().toLowerCase();
-        const formAuthorName = (authorName || '').trim().toLowerCase();
-        const dbPublisherName = (bookDetails.publisher_name || '').trim().toLowerCase();
-        const formPublisherName = (publisherName || '').trim().toLowerCase();
+        // 2. Validate Book Details Match (using the robust comparison from add-books)
+        const dbBookName = (bookDetails.book_name || '').trim().toLowerCase();
+        const formBookName = (bookName || '').trim().toLowerCase();
+        const dbAuthorName = (bookDetails.author_name || '').trim().toLowerCase();
+        const formAuthorName = (authorName || '').trim().toLowerCase();
+        const dbPublisherName = (bookDetails.publisher_name || '').trim().toLowerCase();
+        const formPublisherName = (publisherName || '').trim().toLowerCase();
 
-        if (dbBookName !== formBookName || dbAuthorName !== formAuthorName || dbPublisherName !== formPublisherName) {
-            message = "Book details doesn't match with ISBN. Please enter the correct ISBN or check the book details.";
-            return renderRemoveBooksForm(req, res, message, message2, req.body);
-        }
+        if (dbBookName !== formBookName || dbAuthorName !== formAuthorName || dbPublisherName !== formPublisherName) {
+            message = "Book details doesn't match with ISBN. Please enter the correct ISBN or check the book details.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
 
-        const quantityAvailable = bookDetails.available;
+        const quantityAvailable = bookDetails.available;
 
-        // 3. Validate Quantity
-        if (qty <= 0 || isNaN(qty)) {
-            message2 = "Invalid quantity entered. Quantity must be a positive number.";
-            return renderRemoveBooksForm(req, res, message, message2, req.body);
-        }
+        // 3. Validate Quantity
+        if (qty <= 0 || isNaN(qty)) {
+            message2 = "Invalid quantity entered. Quantity must be a positive number.";
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
 
-        if (qty > quantityAvailable) {
-            message2 = `Invalid quantity entered. Quantity to remove (${qty}) is more than the available quantity (${quantityAvailable}).`;
-            return renderRemoveBooksForm(req, res, message, message2, req.body);
-        }
+        if (qty > quantityAvailable) {
+            message2 = `Invalid quantity entered. Quantity to remove (${qty}) is more than the available quantity (${quantityAvailable}).`;
+            return renderRemoveBooksForm(req, res, message, message2, req.body);
+        }
 
-        // 4. Perform Removal Logic
-        if (qty < quantityAvailable) {
-            // Case 4a: Decrease quantity
-            const sqlUpdate = "UPDATE books SET available = available - ? WHERE isbn = ?";
-            await db.query(sqlUpdate, [qty, isbn]);
-            return sendSuccessRedirect(res, 'Book(s) removed successfully', 'admin/dashboard');
+        // 4. Perform Removal Logic
+        if (qty < quantityAvailable) {
+            // Case 4a: Decrease quantity
+            const sqlUpdate = "UPDATE books SET available = available - ? WHERE isbn = ?";
+            await db.query(sqlUpdate, [qty, isbn]);
+            return sendSuccessRedirect(res, 'Book(s) removed successfully', 'admin/dashboard');
 
-        } else if (qty === quantityAvailable) {
-            // Case 4b: Remove entirely
-            if (bookDetails.borrowed > 0) {
-                // Set available to 0 if still borrowed by someone
-                const sqlUpdateZero = "UPDATE books SET available = 0 WHERE isbn = ?";
-                await db.query(sqlUpdateZero, [isbn]);
-                return sendSuccessRedirect(res, 'Book(s) removed successfully! (Available set to zero)', 'admin/dashboard');
-            } else {
-                // Delete the record entirely
-                const sqlDelete = "DELETE FROM books WHERE isbn = ?";
-                await db.query(sqlDelete, [isbn]);
-                return sendSuccessRedirect(res, 'Book(s) permanently removed from library', 'admin/dashboard');
-            }
-        }
+        } else if (qty === quantityAvailable) {
+            // Case 4b: Remove entirely
+            if (bookDetails.borrowed > 0) {
+                // Set available to 0 if still borrowed by someone
+                const sqlUpdateZero = "UPDATE books SET available = 0 WHERE isbn = ?";
+                await db.query(sqlUpdateZero, [isbn]);
+                return sendSuccessRedirect(res, 'Book(s) removed successfully! (Available set to zero)', 'admin/dashboard');
+            } else {
+                // Delete the record entirely
+                const sqlDelete = "DELETE FROM books WHERE isbn = ?";
+                await db.query(sqlDelete, [isbn]);
+                return sendSuccessRedirect(res, 'Book(s) permanently removed from library', 'admin/dashboard');
+            }
+        }
 
-    } catch (error) {
-        console.error("Database Error:", error);
-        message = "An unexpected database error occurred during book removal.";
-        return renderRemoveBooksForm(req, res, message, message2, req.body);
-    }
+    } catch (error) {
+        console.error("Database Error:", error);
+        message = "An unexpected database error occurred during book removal.";
+        return renderRemoveBooksForm(req, res, message, message2, req.body);
+    }
 });
 
 

@@ -1,0 +1,25 @@
+<% if (books && books.length > 0) { %>
+  <% books.forEach((book, index) => { %>
+    <tr>
+      <td><%= index + 1 %></td>
+      <td><%= book.isbn %></td>
+      <td><%= book.book_name %></td>
+      <td><%= book.author_name %></td>
+      <td><%= book.publisher_name %></td>
+      <td><%= book.available %></td>
+      <td><%= book.borrowed %></td>
+      <td>
+        <div class="action-buttons">
+          <button class="green-btn" onclick="changeQuantity('<%= book.isbn %>', 'add')">
+            <i class="fa-solid fa-plus"></i>&nbsp;&nbsp;Add More
+          </button>
+          <button class="red-btn" onclick="changeQuantity('<%= book.isbn %>', 'remove')" <%= book.available != 0 ? "" : "disabled" %>>
+            <i class="fa-solid fa-minus"></i>&nbsp;&nbsp;Remove
+          </button>
+        </div>
+      </td>
+    </tr>
+  <% }) %>
+<% } else { %>
+  <tr><td colspan="8"><center>No books found</center></td></tr>
+<% } %>

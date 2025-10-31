@@ -2,8 +2,12 @@
   "name": "library-management",
   "version": "1.0.0",
   "main": "app.js",
+  "nodemonConfig": {
+    "ext": "js,ejs,json"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
   },
   "keywords": [],
   "author": "",

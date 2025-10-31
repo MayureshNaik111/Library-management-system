@@ -13,7 +13,7 @@
     function searchBooks() {
       const query = document.getElementById('search').value;
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'search_ManageInventory?query=' + query, true);
+      xhr.open('GET', '/search_ManageInventory?query=' + query, true);
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
           document.getElementById('searchResults').innerHTML = xhr.responseText;
@@ -23,27 +23,45 @@
     }
 
     function changeQuantity(isbn, action) {
-    const url = action === 'add' ? '/api/inventory/add-one' : '/api/inventory/remove-one';
+      const url = action === 'add' ? '/api/inventory/add-one' : '/api/inventory/remove-one';
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isbn: isbn }),
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        // Refresh page to update inventory display
-        window.location.reload();
-      } else {
-        alert(data.message || 'Operation failed.');
-      }
-    })
-    .catch(err => {
-      console.error('Error:', err);
-      alert('Error performing request.');
-    });
-  }
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isbn }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log('Response data:', data);
+          if (data.success && data.updatedBook) {
+            const rows = document.querySelectorAll('#searchResults tr');
+            rows.forEach(row => {
+              const isbnCell = row.querySelector('td[data-label="ISBN No."]');
+              if (isbnCell && isbnCell.textContent.trim() === isbn.trim()) {
+                console.log('Updating row for ISBN:', isbn);
+                row.querySelector('td[data-label="Available"]').textContent = data.updatedBook.available;
+                row.querySelector('td[data-label="Borrowed"]').textContent = data.updatedBook.borrowed;
+                const removeBtn = row.querySelector('button.red-btn');
+                if (data.updatedBook.available === 0) {
+                  removeBtn.setAttribute('disabled', 'disabled');
+                } else {
+                  removeBtn.removeAttribute('disabled');
+                }
+                // Force reflow
+                row.style.display = 'none';
+                row.offsetHeight;
+                row.style.display = '';
+              }
+            });
+          } else {
+            // alert(data.message || 'Operation failed.');
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+        });
+    }
+
   </script>
 </head>
 
